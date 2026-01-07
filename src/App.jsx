@@ -822,6 +822,12 @@ const handleNewsPointerDown = (e) => {
           <div className="space-y-4">
             <span className="text-neutral-300 tracking-[0.4em] uppercase text-[10px] font-bold">Selected Works</span>
             <h3 className="text-4xl md:text-5xl font-serif tracking-tight leading-tight">작품 목록</h3>
+            <div className="flex items-center gap-2 pt-2">
+              <Plus size={14} className="text-neutral-300" />
+              <p className="text-[11px] md:text-xs text-neutral-400 tracking-wider font-medium break-keep">
+  작품을 클릭하시면 상세 정보와 가상 배치를 확인하실 수 있습니다.
+</p>
+            </div>
           </div>
         </div>
         <div
