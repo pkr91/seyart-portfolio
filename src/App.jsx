@@ -984,9 +984,9 @@ const App = () => {
                 /* --- 가상 배치(Simulation) 뷰 시작 --- */
                 <div
                   className="flex flex-col items-center gap-4 md:gap-8 py-2 md:py-6 min-h-full text-center px-2 md:px-4 select-none"
-                  onMouseMove={handleSimMouseMove}
-                  onMouseUp={handleSimMouseUp}
-                  onMouseLeave={handleSimMouseUp}
+                  onPointerMove={handleSimMouseMove} 
+  onPointerUp={handleSimMouseUp}
+  onPointerLeave={handleSimMouseUp}
                 >
                   {/* 1. 상단 방 선택 버튼 (모바일에서 더 작고 촘촘하게) */}
                   <div className="flex flex-wrap justify-center gap-1.5 md:gap-4 mt-2">
@@ -1015,7 +1015,7 @@ const App = () => {
 
                     {/* 작품 프레임: 모바일 가독성을 위해 크기 계산 보정 */}
                     <div
-                      onMouseDown={handleSimMouseDown}
+                      onPointerDown={handleSimMouseDown}
                       className="absolute shadow-[0_15px_30px_-10px_rgba(0,0,0,0.5)] md:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] border-[2px] md:border-[4px] border-white transition-transform duration-75 ease-out cursor-grab active:cursor-grabbing"
                       style={{
                         top: `${activeRoom.wallPos.top}%`,
