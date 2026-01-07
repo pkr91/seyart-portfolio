@@ -673,13 +673,13 @@ const App = () => {
       )}
 
 
-      <section id="home" className="relative h-screen flex items-center justify-center overflow-hidden px-8 bg-neutral-100">
+      <section id="home" className="relative h-[100dvh] flex items-center justify-center  px-8 bg-neutral-100">
         {/* 배경 이미지 레이어 */}
         <div className="absolute inset-0 z-0">
           <img
             src={`${BASE_URL}main_bg.png`}
             alt="Main Background"
-            className="w-full h-full object-cover"
+            className="w-full h-[100dvh] object-cover"
             onError={(e) => { e.target.style.display = 'none'; }}
           />
           <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px]"></div>
