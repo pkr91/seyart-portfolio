@@ -1,16 +1,38 @@
-# React + Vite
+# 🎨 Artist Shin Eun Young Portfolio
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> "틈과 틈 사이에 서서, 보이지 않는 울림을 그리다."
 
-Currently, two official plugins are available:
+우리 엄마인 신은영 작가님의 평생의 기록과 예술 세계를 담기 위해 딸이 제작한 반응형 아트 포트폴리오 웹사이트입니다.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🌟 프로젝트 배경
 
-## React Compiler
+이 프로젝트는 21회 이상의 개인전을 개최하며 활발히 활동 중이신 신은영 작가님의 작품들을 디지털 공간에 아름답게 기록하고, 누구나 쉽게 감상할 수 있도록 기획되었습니다.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+아티스트의 철학인 '틈'의 미학을 웹 디자인의 **'여백'**과 **'절제'**로 표현하는 데 집중했습니다.
 
-## Expanding the ESLint configuration
+## ✨ 주요 기능 (Key Features)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 🖼️ Minimalist Gallery
+
+*   **Marquee 슬라이더:** 갤러리를 걷는 듯한 느낌을 주는 자동 스크롤 레이아웃을 구현했습니다.
+*   **2단 리듬 배치:** 작품의 비율(가로/세로/정사각)을 자동으로 분석하여 리드미컬하게 배치합니다.
+*   **플로팅 카드:** 배경과 경계가 없는 디자인을 적용하여 작품 자체의 몰입도를 극대화했습니다.
+
+### 🏠 Virtual Placement (가상 배치 시뮬레이션)
+
+*   **실제 비율 반영:** 작품의 실제 크기(cm)와 이미지 비율을 계산하여 가상 공간에 정확한 크기로 배치합니다.
+*   **다양한 공간 프리셋:** 거실, 카페, 복도 등 다양한 조명 조건의 방에서 작품을 시뮬레이션할 수 있습니다.
+*   **인터랙티브 컨트롤:** 마우스 드래그를 통한 위치 이동, 확대/축소, 90도 회전 기능을 제공합니다.
+
+### 📱 Responsive Design
+
+*   **모바일 최적화:** `break-keep` 속성을 활용한 자연스러운 한글 줄바꿈과 모바일 전용 전체화면 메뉴를 제공합니다.
+*   **유동적 레이아웃:** 모든 디바이스에서 최적화된 글자 크기와 이미지 배치를 보장합니다.
+
+## 🛠 Tech Stack
+
+*   **Frontend:** React (Vite)
+*   **Styling:** Tailwind CSS 4.0
+*   **Icons:** Lucide-React
+*   **Deployment:** Vercel / GitHub Actions
+*   **Animation:** Framer Motion 스타일의 CSS Keyframes
