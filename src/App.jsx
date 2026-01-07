@@ -863,12 +863,23 @@ const App = () => {
             </div>
             <div ref={newsSliderRef} className="flex overflow-x-auto pb-8 gap-5 md:gap-8 snap-x no-scrollbar">
               {PRESS_ARTICLES.map((article, i) => (
-                <a key={i} href={article.url} className="min-w-[260px] sm:min-w-[300px] md:min-w-[380px] ...">
-                  <Newspaper className="text-neutral-500 mb-8 group-hover:text-neutral-300 transition-colors" size={28} strokeWidth={1} />
-                  <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest mb-4">{article.source}</p>
-                  <h5 className="text-lg font-serif leading-relaxed text-neutral-300 group-hover:text-white transition-all h-14 overflow-hidden">{article.title}</h5>
-                </a>
-              ))}
+  <a 
+    key={i} 
+    href={article.url} 
+    /* 1. transform-gpu 클래스 추가 (GPU 가속 강제) */
+    className="min-w-[260px] sm:min-w-[300px] md:min-w-[380px] group/news block transform-gpu"
+    /* 2. 렌더링 아티팩트 방지를 위한 스타일 추가 */
+    style={{ 
+      backfaceVisibility: 'hidden', 
+      WebkitBackfaceVisibility: 'hidden',
+      outline: '1px solid transparent' // 미세한 픽셀 오차 보정용 trick
+    }}
+  >
+    <Newspaper className="text-neutral-500 mb-8 group-hover:text-neutral-300 transition-colors" size={28} strokeWidth={1} />
+    <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest mb-4">{article.source}</p>
+    <h5 className="text-lg font-serif leading-relaxed text-neutral-300 group-hover:text-white transition-all h-14 overflow-hidden">{article.title}</h5>
+  </a>
+))}
             </div>
           </div>
         </div>
