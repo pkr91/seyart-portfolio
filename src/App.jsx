@@ -469,33 +469,55 @@ const App = () => {
     , [activeCategory]);
 
   const loopList = useMemo(() => [...filteredArtList, ...filteredArtList, ...filteredArtList], [filteredArtList]);
+  const [pressStartTime, setPressStartTime] = useState(0); // 클릭 시간 측정용
 
   const handleMouseDown = (e) => {
     setIsDown(true);
-    setIsMoving(false); // 터치 시작 시 이동 상태 초기화
+    setIsMoving(false);
+    setPressStartTime(Date.now()); // 누르기 시작한 시간 저장
+
     const pageX = e.pageX || e.touches?.[0].pageX;
     const pageY = e.pageY || e.touches?.[0].pageY;
+
     setStartX(pageX - (sliderRef.current?.offsetLeft || 0));
     setStartY(pageY);
     setScrollLeft(sliderRef.current?.scrollLeft || 0);
   };
-  const handleMouseLeave = () => setIsDown(false);
-  const handleMouseUp = () => setIsDown(false);
+
   const handleMouseMove = (e) => {
     if (!isDown) return;
+
     const pageX = e.pageX || e.touches?.[0].pageX;
     const pageY = e.pageY || e.touches?.[0].pageY;
     const x = pageX - (sliderRef.current?.offsetLeft || 0);
 
-    if (Math.abs(x - startX) > 10 || Math.abs(pageY - startY) > 10) {
+    // 모바일 지터를 감안하여 임계값을 15px로 상향
+    const diffX = Math.abs(x - startX);
+    const diffY = Math.abs(pageY - startY);
+
+    if (diffX > 15 || diffY > 15) {
       setIsMoving(true);
     }
 
     if (isMoving) {
-      if (e.cancelable) e.preventDefault();
+      // 드래그 중일 때만 애니메이션 일시 중지하도록 로직이 연결됨
       const walk = (x - startX) * 2;
-      if (sliderRef.current) sliderRef.current.scrollLeft = scrollLeft - walk;
+      if (sliderRef.current) {
+        sliderRef.current.scrollLeft = scrollLeft - walk;
+      }
     }
+  };
+
+  const handleMouseUp = (e) => {
+    // 클릭 시간이 짧으면(200ms 미만) 무조건 클릭으로 간주하여 isMoving 강제 해제
+    const pressDuration = Date.now() - pressStartTime;
+    if (pressDuration < 200) {
+      setIsMoving(false);
+    }
+
+    setIsDown(false);
+    // 약간의 지연 시간을 주어 ArtworkCard의 onClick이 먼저 실행되게 함
+    setTimeout(() => setIsMoving(false), 50);
   };
 
   const handleNewsMouseDown = (e) => { setIsNewsDown(true); setNewsStartX(e.pageX - newsSliderRef.current.offsetLeft); setNewsScrollLeft(newsSliderRef.current.scrollLeft); };
@@ -554,7 +576,12 @@ const App = () => {
         .animate-marquee { display: flex; width: fit-content; animation: marquee 20s linear infinite; }
         .animate-marquee:hover { animation-play-state: paused; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+          touch-action: pan-y; /* 수직 스크롤은 브라우저에 맡기고 수평 터치 간섭 방지 */
+          -webkit-overflow-scrolling: touch;
+        }
         html { scroll-behavior: smooth; }
         .custom-scrollbar::-webkit-scrollbar { height: 3px; width: 3px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -709,19 +736,19 @@ const App = () => {
         </div>
         <div
           ref={sliderRef}
-          className="cursor-grab active:cursor-grabbing overflow-x-auto no-scrollbar h-[520px] md:h-[680px] relative select-none"
-          onMouseDown={handleMouseDown}
-          onMouseLeave={() => setIsDown(false)}
-          onMouseUp={() => setIsDown(false)}
-          onMouseMove={handleMouseMove}
+          className="overflow-x-auto no-scrollbar h-[520px] md:h-[680px] relative select-none touch-pan-y"
+          onPointerDown={handleMouseDown} // MouseDown 대신 PointerDown 권장
+          onPointerMove={handleMouseMove}
+          onPointerUp={handleMouseUp}
+          onPointerLeave={handleMouseUp}
         >
           <div
             className={`
       flex flex-col flex-wrap content-start h-full gap-2 md:gap-4 px-4 
-      ${!isDown ? 'animate-marquee' : 'animate-none'} 
+      ${(!isDown && !selectedArt) ? 'animate-marquee' : ''} 
       w-max
     `}
-            style={{ minWidth: '100%' }}
+            style={{ minWidth: '100%', pointerEvents: 'auto' }}
           >
             {loopList.map((art, idx) => (
               <ArtworkCard key={`${art.id}-${idx}`} art={art} isScrolling={isMoving} onClick={(a) => { setSelectedArt(a); setPreviewMode('info'); }} />
