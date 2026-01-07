@@ -415,8 +415,15 @@ const App = () => {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   const handleSimMouseDown = (e) => {
+    // 💡 마우스 오른쪽 버튼 클릭은 무시
+    if (e.button === 2) return;
+
     setIsDragging(true);
-    setDragStart({ x: e.clientX - simPos.x, y: e.clientY - simPos.y });
+    // Pointer 이벤트를 사용하면 e.clientX를 그대로 쓸 수 있어 편리합니다.
+    setDragStart({
+      x: e.clientX - simPos.x,
+      y: e.clientY - simPos.y
+    });
   };
 
   const handleSimMouseMove = (e) => {
@@ -831,7 +838,7 @@ const App = () => {
             <div className="w-full max-w-5xl mx-auto">
               <div className="relative aspect-video bg-black shadow-2xl rounded-sm overflow-hidden border border-white/5">
                 <iframe
-                  src="https://www.youtube.com/embed/NXrGvPJIF48"
+                  src="https://www.youtube.com/embed/NXrGvPJIF48?autoplay=1&mute=1&playlist=NXrGvPJIF48&loop=1"
                   title="드라마 협찬 영상"
                   className="absolute inset-0 w-full h-full"
                   frameBorder="0"
@@ -976,7 +983,11 @@ const App = () => {
                       <button
                         key={room.id}
                         onClick={() => setActiveRoom(room)}
-                        className={`px-3 md:px-8 py-1 md:py-2 rounded-full text-[8px] md:text-[10px] tracking-widest uppercase font-bold border transition-all duration-700 ${activeRoom.id === room.id ? 'bg-neutral-900 border-neutral-900 text-white' : 'bg-white border-neutral-100 text-neutral-300'}`}
+                        // 💡 px-3 -> px-6, py-1 -> py-3, text-[8px] -> text-xs 로 대폭 키웠습니다.
+                        className={`px-6 md:px-8 py-3 md:py-3 rounded-full text-xs md:text-sm tracking-widest uppercase font-bold border transition-all duration-700 ${activeRoom.id === room.id
+                          ? 'bg-neutral-900 border-neutral-900 text-white shadow-lg'
+                          : 'bg-white border-neutral-100 text-neutral-400'
+                          }`}
                       >
                         {room.name}
                       </button>
@@ -1002,6 +1013,7 @@ const App = () => {
                         width: `${(calculatedSize.width * simScale) * (window.innerWidth < 768 ? 0.5 : 1)}px`,
                         height: `${(calculatedSize.height * simScale) * (window.innerWidth < 768 ? 0.5 : 1)}px`,
                         transform: `translate(calc(-50% + ${simPos.x}px), calc(-50% + ${simPos.y}px)) rotate(${rotation}deg)`,
+                        touchAction: 'none'
                       }}
                     >
                       <img
