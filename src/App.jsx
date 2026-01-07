@@ -113,7 +113,7 @@ The end of COVID 19│90.0x72.7cm│mixed media│2021.jpg
 하늘이 머문 초록│50x50cm│Mixed media│2025.jpg
 떨어지는 마음들│72.7x60.6cm│ mixed media│2025.jpg
 8월의 크리스마스│91x72.7cm│mixed media│2025.jpg
-침묵의 꽃│40x40cm│mixed media│2024.jpg
+침묵의 꽃│40x40cm│mixed media│2023.jpg
 결의속삭임Ⅱ│50x50cm│Mixed Media│2025.jpg
 결의속삭임Ⅰ│50x50cm│Mixed Media│2025.jpg
 틈의 울림Ⅰ│50x50cm│mixed media│ 2025.jpg
@@ -279,7 +279,11 @@ const generateArtworks = (rawText) => {
   });
 };
 
-const ARTWORKS = generateArtworks(RAW_TEXT_LIST);
+const ARTWORKS = generateArtworks(RAW_TEXT_LIST).sort((a, b) => {
+  if (a.year.includes('2024') && !b.year.includes('2024')) return -1;
+  if (!a.year.includes('2024') && b.year.includes('2024')) return 1;
+  return 0;
+});
 
 const ARTIST_INFO = {
   name: "신은영",
@@ -334,7 +338,7 @@ const ROOM_SCENES = [
   { id: 'gallery', name: '사무실', img: '/hallway.png', wallPos: { top: 35, left: 50 } },
 ];
 
-const ArtworkCard = ({ art, onClick }) => {
+const ArtworkCard = ({ art, onClick, isScrolling }) => { // 1. 부모로부터 isScrolling을 전달받습니다.
   const [aspect, setAspect] = useState('square');
   const imageSrc = getSafePath('works', art.fileName);
 
@@ -348,24 +352,23 @@ const ArtworkCard = ({ art, onClick }) => {
     img.onerror = () => setAspect('square');
   }, [imageSrc]);
 
-  /** * 💡 리듬감 있는 배치를 위한 설정
-   * 세로형(portrait)은 높이를 크게 가져가서 2줄을 차지하게 유도하고, 
-   * 가로/정사각형은 높이를 절반 정도로 설정합니다.
-   */
+  // 💡 2. 안전한 클릭 함수 만들기 (이 부분이 없으면 에러가 납니다!)
+  const handleCardClick = (e) => {
+    // 만약 옆으로 미는 중(드래그)이라면 클릭이 무시됩니다.
+    if (isScrolling) return;
+    onClick({ ...art, aspect });
+  };
+
   const heightClass = aspect === 'portrait' ? "h-[500px] md:h-[640px]" : "h-[240px] md:h-[310px]";
 
   return (
-    <div className={`flex-shrink-0 p-2 ${heightClass} cursor-pointer group w-fit`} onClick={() => onClick({ ...art, aspect })}>
-      <div className="relative h-full bg-white transition-all duration-1000 overflow-hidden flex items-center justify-center">
+    <div
+      className={`flex-shrink-0 p-2 ${heightClass} cursor-pointer group w-fit touch-manipulation`}
+      onClick={handleCardClick} // 3. 위에서 만든 함수를 여기에 연결합니다.
+    >
+      <div className="relative h-full bg-white transition-all duration-1000 overflow-hidden flex items-center justify-center pointer-events-none">
         <div className="relative h-full w-auto flex items-center justify-center transition-transform duration-1000 group-hover:scale-105">
-          <img
-            src={imageSrc}
-            alt={art.title}
-            className="h-full w-auto object-contain"
-            onError={(e) => { e.target.src = getPlaceholderSrc(); }}
-          />
-
-          {/* 애니메이션 레이어: 이미지 영역에만 딱 맞춰 나타남 */}
+          <img src={imageSrc} alt={art.title} className="h-full w-auto object-contain" />
           <div className="absolute inset-0 bg-neutral-900/0 group-hover:bg-neutral-900/80 transition-all duration-700 flex items-center justify-center opacity-0 group-hover:opacity-100">
             <div className="text-center text-white p-4 transform translate-y-4 group-hover:translate-y-0 transition-all duration-700">
               <p className="text-[8px] md:text-[10px] tracking-[0.4em] uppercase mb-1 md:mb-2 font-light text-neutral-400">{art.year}</p>
@@ -377,6 +380,7 @@ const ArtworkCard = ({ art, onClick }) => {
     </div>
   );
 };
+
 
 
 const App = () => {
@@ -396,7 +400,9 @@ const App = () => {
   const sliderRef = useRef(null);
   const [isDown, setIsDown] = useState(false);
   const [startX, setStartX] = useState(0);
+  const [startY, setStartY] = useState(0); // Y축 이동 감지용 추가
   const [scrollLeft, setScrollLeft] = useState(0);
+  const [isMoving, setIsMoving] = useState(false); // 실제 드래그 중인지 체크용 추가
 
   const newsSliderRef = useRef(null);
   const [isNewsDown, setIsNewsDown] = useState(false);
@@ -461,19 +467,30 @@ const App = () => {
 
   const handleMouseDown = (e) => {
     setIsDown(true);
-    // 마우스 클릭 위치와 현재 스크롤 위치 저장
-    setStartX(e.pageX - sliderRef.current.offsetLeft);
+    setIsMoving(false); // 클릭 시작 시 이동 중이 아님으로 초기화
+    const pageX = e.pageX || e.touches?.[0].pageX;
+    const pageY = e.pageY || e.touches?.[0].pageY;
+    setStartX(pageX - sliderRef.current.offsetLeft);
+    setStartY(pageY);
     setScrollLeft(sliderRef.current.scrollLeft);
   };
   const handleMouseLeave = () => setIsDown(false);
   const handleMouseUp = () => setIsDown(false);
   const handleMouseMove = (e) => {
-    if (!isDown) return; // 마우스를 누르고 있지 않으면 실행 안함
-    e.preventDefault();
-    const x = e.pageX - sliderRef.current.offsetLeft;
-    // 움직인 거리만큼 스크롤 위치를 변경 (민감도 조절: * 2)
-    const walk = (x - startX) * 2;
-    sliderRef.current.scrollLeft = scrollLeft - walk;
+    if (!isDown) return;
+    const pageX = e.pageX || e.touches?.[0].pageX;
+    const pageY = e.pageY || e.touches?.[0].pageY;
+    const x = pageX - sliderRef.current.offsetLeft;
+
+    // 💡 5px 이상 움직이면 드래그로 간주
+    if (Math.abs(x - startX) > 5 || Math.abs(pageY - startY) > 5) {
+      setIsMoving(true);
+    }
+
+    if (isMoving) {
+      const walk = (x - startX) * 2;
+      sliderRef.current.scrollLeft = scrollLeft - walk;
+    }
   };
 
   const handleNewsMouseDown = (e) => { setIsNewsDown(true); setNewsStartX(e.pageX - newsSliderRef.current.offsetLeft); setNewsScrollLeft(newsSliderRef.current.scrollLeft); };
@@ -687,7 +704,7 @@ const App = () => {
             style={{ minWidth: '100%' }}
           >
             {loopList.map((art, idx) => (
-              <ArtworkCard key={`${art.id}-${idx}`} art={art} onClick={(a) => { setSelectedArt(a); setPreviewMode('info'); }} />
+              <ArtworkCard key={`${art.id}-${idx}`} art={art} isScrolling={isMoving} onClick={(a) => { setSelectedArt(a); setPreviewMode('info'); }} />
             ))}
           </div>
         </div>
