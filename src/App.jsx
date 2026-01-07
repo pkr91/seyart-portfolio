@@ -338,7 +338,7 @@ const ROOM_SCENES = [
   { id: 'gallery', name: '사무실', img: '/hallway.png', wallPos: { top: 35, left: 50 } },
 ];
 
-const ArtworkCard = ({ art, onClick, isScrolling }) => { // 1. 부모로부터 isScrolling을 전달받습니다.
+const ArtworkCard = ({ art, onClick, isScrolling }) => {
   const [aspect, setAspect] = useState('square');
   const imageSrc = getSafePath('works', art.fileName);
 
@@ -352,10 +352,12 @@ const ArtworkCard = ({ art, onClick, isScrolling }) => { // 1. 부모로부터 i
     img.onerror = () => setAspect('square');
   }, [imageSrc]);
 
-  // 💡 2. 안전한 클릭 함수 만들기 (이 부분이 없으면 에러가 납니다!)
+  // 💡 모바일 클릭 안정화 핸들러
   const handleCardClick = (e) => {
-    // 만약 옆으로 미는 중(드래그)이라면 클릭이 무시됩니다.
+    // 드래그 중(isScrolling)이라면 상세창을 열지 않습니다.
     if (isScrolling) return;
+
+    // 모바일에서 클릭이 잘 안 먹는 경우를 대비해 전파 중단을 방지하고 바로 실행
     onClick({ ...art, aspect });
   };
 
@@ -363,12 +365,14 @@ const ArtworkCard = ({ art, onClick, isScrolling }) => { // 1. 부모로부터 i
 
   return (
     <div
-      className={`flex-shrink-0 p-2 ${heightClass} cursor-pointer group w-fit touch-manipulation`}
-      onClick={handleCardClick} // 3. 위에서 만든 함수를 여기에 연결합니다.
+      className={`flex-shrink-0 p-2 ${heightClass} cursor-pointer group w-fit touch-manipulation relative z-10`}
+      onClick={handleCardClick}
     >
       <div className="relative h-full bg-white transition-all duration-1000 overflow-hidden flex items-center justify-center pointer-events-none">
         <div className="relative h-full w-auto flex items-center justify-center transition-transform duration-1000 group-hover:scale-105">
-          <img src={imageSrc} alt={art.title} className="h-full w-auto object-contain" />
+          <img src={imageSrc} alt={art.title} className="h-full w-auto object-contain" onError={(e) => { e.target.src = getPlaceholderSrc(); }} />
+
+          {/* 애니메이션 오버레이 */}
           <div className="absolute inset-0 bg-neutral-900/0 group-hover:bg-neutral-900/80 transition-all duration-700 flex items-center justify-center opacity-0 group-hover:opacity-100">
             <div className="text-center text-white p-4 transform translate-y-4 group-hover:translate-y-0 transition-all duration-700">
               <p className="text-[8px] md:text-[10px] tracking-[0.4em] uppercase mb-1 md:mb-2 font-light text-neutral-400">{art.year}</p>
@@ -380,6 +384,7 @@ const ArtworkCard = ({ art, onClick, isScrolling }) => { // 1. 부모로부터 i
     </div>
   );
 };
+
 
 
 
@@ -467,12 +472,12 @@ const App = () => {
 
   const handleMouseDown = (e) => {
     setIsDown(true);
-    setIsMoving(false); // 클릭 시작 시 이동 중이 아님으로 초기화
+    setIsMoving(false); // 터치 시작 시 이동 상태 초기화
     const pageX = e.pageX || e.touches?.[0].pageX;
     const pageY = e.pageY || e.touches?.[0].pageY;
-    setStartX(pageX - sliderRef.current.offsetLeft);
+    setStartX(pageX - (sliderRef.current?.offsetLeft || 0));
     setStartY(pageY);
-    setScrollLeft(sliderRef.current.scrollLeft);
+    setScrollLeft(sliderRef.current?.scrollLeft || 0);
   };
   const handleMouseLeave = () => setIsDown(false);
   const handleMouseUp = () => setIsDown(false);
@@ -480,16 +485,16 @@ const App = () => {
     if (!isDown) return;
     const pageX = e.pageX || e.touches?.[0].pageX;
     const pageY = e.pageY || e.touches?.[0].pageY;
-    const x = pageX - sliderRef.current.offsetLeft;
+    const x = pageX - (sliderRef.current?.offsetLeft || 0);
 
-    // 💡 5px 이상 움직이면 드래그로 간주
-    if (Math.abs(x - startX) > 5 || Math.abs(pageY - startY) > 5) {
+    if (Math.abs(x - startX) > 10 || Math.abs(pageY - startY) > 10) {
       setIsMoving(true);
     }
 
     if (isMoving) {
+      if (e.cancelable) e.preventDefault();
       const walk = (x - startX) * 2;
-      sliderRef.current.scrollLeft = scrollLeft - walk;
+      if (sliderRef.current) sliderRef.current.scrollLeft = scrollLeft - walk;
     }
   };
 
@@ -515,10 +520,25 @@ const App = () => {
   };
 
   const handleInquiryRequest = (art) => {
-    setContactData({ ...contactData, message: `안녕하세요. [${art.title}] 작품에 대한 소장 문의드립니다.\n(사이즈: ${art.size} / 제작년도: ${art.year})` });
+    // 💡 1. 문의 양식(message)에 클릭한 작품의 정보를 자동으로 채워넣습니다.
+    setContactData({
+      ...contactData,
+      message: `안녕하세요. [${art.title}] 작품에 대한 소장 문의드립니다.\n(사이즈: ${art.size} / 제작년도: ${art.year})`
+    });
+
+    // 2. 열려있는 작품 상세 창(모달)을 닫습니다.
     setSelectedArt(null);
-    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+
+    // 3. 창이 완전히 닫힐 시간을 잠깐(0.3초) 준 뒤, 입력 폼으로 이동합니다.
+    setTimeout(() => {
+      // 'contact-form' ID가 있는 곳으로 부드럽게 스크롤합니다.
+      const contactSection = document.getElementById('contact-form');
+      if (contactSection) {
+        contactSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 300);
   };
+
 
   return (
     <div className="min-h-screen bg-white text-neutral-900 font-sans selection:bg-neutral-100">
@@ -811,7 +831,7 @@ const App = () => {
               </div>
             </div>
           </div>
-          <div className="md:w-3/5 bg-neutral-50 p-12 md:p-16 border border-neutral-100 rounded-sm">
+          <div id="contact-form" className="md:w-3/5 bg-neutral-50 p-12 md:p-16 border border-neutral-100 rounded-sm scroll-mt-32">
             <form className="space-y-8" onSubmit={handleContactSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <input required value={contactData.name} onChange={(e) => setContactData({ ...contactData, name: e.target.value })} type="text" className="w-full bg-transparent border-b border-neutral-200 py-3 text-sm outline-none focus:border-neutral-900 transition-colors" placeholder="성함" />
@@ -876,7 +896,10 @@ const App = () => {
                       <span className="text-neutral-300">Dimensions</span>
                       <span className="text-neutral-900 font-serif text-sm md:text-lg">{selectedArt.size}</span>
                     </div>
-                    <button onClick={() => handleInquiryRequest(selectedArt)} className="w-full bg-neutral-900 text-white py-4 md:py-6 text-[10px] md:text-[12px] tracking-[0.3em] font-bold uppercase hover:bg-neutral-800 transition-all rounded-sm shadow-lg">
+                    <button
+                      onClick={() => handleInquiryRequest(selectedArt)}
+                      className="w-full bg-neutral-900 text-white py-4 md:py-6 text-[10px] md:text-[12px] tracking-[0.3em] font-bold uppercase hover:bg-neutral-800 transition-all rounded-sm shadow-lg"
+                    >
                       작품 소장 문의하기
                     </button>
                   </div>
