@@ -405,6 +405,7 @@ const App = () => {
 
   const newsSliderRef = useRef(null);
   const [isNewsDown, setIsNewsDown] = useState(false);
+  const [isNewsMoving, setIsNewsMoving] = useState(false); //추가
   const [newsStartX, setNewsStartX] = useState(0);
   const [newsScrollLeft, setNewsScrollLeft] = useState(0);
 
@@ -545,10 +546,34 @@ const App = () => {
     setTimeout(() => setIsMoving(false), 50);
   };
 
-  const handleNewsMouseDown = (e) => { setIsNewsDown(true); setNewsStartX(e.pageX - newsSliderRef.current.offsetLeft); setNewsScrollLeft(newsSliderRef.current.scrollLeft); };
-  const handleNewsMouseLeave = () => setIsNewsDown(false);
-  const handleNewsMouseUp = () => setIsNewsDown(false);
-  const handleNewsMouseMove = (e) => { if (!isNewsDown) return; e.preventDefault(); const x = e.pageX - newsSliderRef.current.offsetLeft; const walk = (x - newsStartX) * 1.5; newsSliderRef.current.scrollLeft = newsScrollLeft - walk; };
+const handleNewsPointerDown = (e) => {
+    setIsNewsDown(true);
+    setIsNewsMoving(false); // 💡 시작할 때는 움직임 없음으로 초기화
+    setNewsStartX(e.pageX - newsSliderRef.current.offsetLeft);
+    setNewsScrollLeft(newsSliderRef.current.scrollLeft);
+  };
+
+  const handleNewsPointerMove = (e) => {
+    if (!isNewsDown) return;
+    const x = e.pageX - newsSliderRef.current.offsetLeft;
+    const walk = (x - newsStartX);
+
+    // 💡 5픽셀 이상 움직였다면 '드래그'로 간주합니다.
+    if (Math.abs(walk) > 5) {
+      setIsNewsMoving(true);
+    }
+
+    if (newsSliderRef.current) {
+      newsSliderRef.current.scrollLeft = newsScrollLeft - walk * 1.5;
+    }
+  };
+
+  const handleNewsPointerUp = () => {
+    setIsNewsDown(false);
+    // 💡 0.1초 뒤에 움직임 상태를 해제하여 클릭 이벤트가 먼저 실행되게 합니다.
+    setTimeout(() => setIsNewsMoving(false), 100);
+  };
+
   const scrollNews = (direction) => { if (!newsSliderRef.current) return; newsSliderRef.current.scrollBy({ left: direction === 'left' ? -350 : 350, behavior: 'smooth' }); };
 
   const handleContactSubmit = async (e) => {
@@ -861,11 +886,28 @@ const App = () => {
                 <button onClick={() => scrollNews('right')} className="w-10 h-10 md:w-14 md:h-14 rounded-full border border-white/10 flex items-center justify-center hover:bg-white hover:text-neutral-900 transition-all"><ChevronRight size={18} /></button>
               </div>
             </div>
-            <div ref={newsSliderRef} className="flex overflow-x-auto pb-8 gap-5 md:gap-8 snap-x no-scrollbar">
+            <div 
+  ref={newsSliderRef} 
+  onPointerDown={handleNewsPointerDown}
+  onPointerMove={handleNewsPointerMove}
+  onPointerUp={handleNewsPointerUp}
+  onPointerCancel={handleNewsPointerUp} 
+  className="flex overflow-x-auto pb-8 gap-5 md:gap-8 snap-x no-scrollbar cursor-grab active:cursor-grabbing select-none"
+  style={{ touchAction: 'pan-y' }}
+>
               {PRESS_ARTICLES.map((article, i) => (
   <a 
     key={i} 
-    href={article.url} 
+    href={article.url}
+    target="_blank"
+    rel="noopener noreferrer"
+    draggable="false"
+    onDragStart={(e) => e.preventDefault()}
+    onClick={(e) => {
+      if (isNewsMoving) {
+        e.preventDefault();
+      }
+    }}
     /* 1. transform-gpu 클래스 추가 (GPU 가속 강제) */
     className="min-w-[260px] sm:min-w-[300px] md:min-w-[380px] group/news block transform-gpu"
     /* 2. 렌더링 아티팩트 방지를 위한 스타일 추가 */
