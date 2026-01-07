@@ -335,7 +335,7 @@ const PRESS_ARTICLES = [
 const ROOM_SCENES = [
   { id: 'living', name: '거실', img: '/livingroom.jpg', wallPos: { top: 32, left: 50 } },
   { id: 'cafe', name: '카페', img: '/cafe.jpg', wallPos: { top: 35, left: 50 } },
-  { id: 'gallery', name: '사무실', img: '/hallway.png', wallPos: { top: 35, left: 50 } },
+  { id: 'gallery', name: '사무실', img: '/hallway.jpg', wallPos: { top: 35, left: 50 } },
 ];
 
 const ArtworkCard = ({ art, onClick, isScrolling }) => {
@@ -382,6 +382,7 @@ const ArtworkCard = ({ art, onClick, isScrolling }) => {
 };
 
 const App = () => {
+  const loopNewsList = useMemo(() => [...PRESS_ARTICLES, ...PRESS_ARTICLES, ...PRESS_ARTICLES], []);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState('All');
   const [selectedArt, setSelectedArt] = useState(null);
@@ -574,6 +575,30 @@ const handleNewsPointerDown = (e) => {
     setTimeout(() => setIsNewsMoving(false), 100);
   };
 
+  const handleNewsScroll = () => {
+    if (!newsSliderRef.current) return;
+    
+    const container = newsSliderRef.current;
+    const singleSetWidth = container.scrollWidth / 3; // 전체 길이의 1/3 지점
+
+    // 1. 오른쪽 끝(2/3 지점)에 도달하면 중앙(1/3 지점)으로 순간이동
+    if (container.scrollLeft >= singleSetWidth * 2) {
+      container.scrollLeft = singleSetWidth;
+    }
+    // 2. 왼쪽 끝(0 지점)에 도달하면 중앙(1/3 지점)으로 순간이동
+    else if (container.scrollLeft <= 0) {
+      container.scrollLeft = singleSetWidth;
+    }
+  };
+
+  // 💡 추가: 페이지가 처음 열릴 때 스크롤을 중앙 세트로 위치시킴
+  useEffect(() => {
+    if (newsSliderRef.current) {
+      const singleSetWidth = newsSliderRef.current.scrollWidth / 3;
+      newsSliderRef.current.scrollLeft = singleSetWidth;
+    }
+  }, []);
+
   const scrollNews = (direction) => { if (!newsSliderRef.current) return; newsSliderRef.current.scrollBy({ left: direction === 'left' ? -350 : 350, behavior: 'smooth' }); };
 
   const handleContactSubmit = async (e) => {
@@ -702,7 +727,7 @@ const handleNewsPointerDown = (e) => {
         {/* 배경 이미지 레이어 */}
         <div className="absolute inset-0 z-0">
           <img
-            src={`${BASE_URL}main_bg.png`}
+            src={`${BASE_URL}main_bg.jpg`}
             alt="Main Background"
             className="w-full h-[100dvh] object-cover"
             onError={(e) => { e.target.style.display = 'none'; }}
@@ -750,7 +775,7 @@ const handleNewsPointerDown = (e) => {
           <div className="relative aspect-[4/5] bg-neutral-50 group overflow-hidden border border-neutral-100">
             <div className="absolute inset-0 bg-neutral-100 flex items-center justify-center">
               <img
-                src="/profile.png"
+                src="/profile.jpg"
                 alt="신은영 작가 프로필"
                 className={`w-full h-full object-cover transition-all duration-1000 group-hover:scale-105 ${profileLoaded ? 'opacity-100' : 'opacity-0'}`}
                 onLoad={() => setProfileLoaded(true)}
@@ -892,11 +917,12 @@ const handleNewsPointerDown = (e) => {
   onPointerMove={handleNewsPointerMove}
   onPointerUp={handleNewsPointerUp}
   onPointerCancel={handleNewsPointerUp} 
+  onScroll={handleNewsScroll}
   className="flex overflow-x-auto pb-8 gap-5 md:gap-8 snap-x no-scrollbar cursor-grab active:cursor-grabbing select-none"
   style={{ touchAction: 'pan-y' }}
 >
-              {PRESS_ARTICLES.map((article, i) => (
-  <a 
+              {loopNewsList.map((article, i) => (
+    <a
     key={i} 
     href={article.url}
     target="_blank"
