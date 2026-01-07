@@ -349,34 +349,30 @@ const ArtworkCard = ({ art, onClick, isScrolling }) => {
       const ratio = img.naturalWidth / img.naturalHeight;
       setAspect(ratio < 0.8 ? 'portrait' : ratio > 1.25 ? 'landscape' : 'square');
     };
-    img.onerror = () => setAspect('square');
   }, [imageSrc]);
-
-  // 💡 모바일 클릭 안정화 핸들러
-  const handleCardClick = (e) => {
-    // 드래그 중(isScrolling)이라면 상세창을 열지 않습니다.
-    if (isScrolling) return;
-
-    // 모바일에서 클릭이 잘 안 먹는 경우를 대비해 전파 중단을 방지하고 바로 실행
-    onClick({ ...art, aspect });
-  };
-
-  const heightClass = aspect === 'portrait' ? "h-[500px] md:h-[640px]" : "h-[240px] md:h-[310px]";
 
   return (
     <div
-      className={`flex-shrink-0 p-2 ${heightClass} cursor-pointer group w-fit touch-manipulation relative z-10`}
-      onClick={handleCardClick}
+      className={`flex-shrink-0 p-2 ${aspect === 'portrait' ? "h-[500px] md:h-[640px]" : "h-[240px] md:h-[310px]"} cursor-pointer group w-fit touch-manipulation relative z-10`}
+      onClick={(e) => {
+        if (isScrolling) return;
+        onClick({ ...art, aspect });
+      }}
     >
-      <div className="relative h-full bg-white transition-all duration-1000 overflow-hidden flex items-center justify-center pointer-events-none">
-        <div className="relative h-full w-auto flex items-center justify-center transition-transform duration-1000 group-hover:scale-105">
-          <img src={imageSrc} alt={art.title} className="h-full w-auto object-contain" onError={(e) => { e.target.src = getPlaceholderSrc(); }} />
-
-          {/* 애니메이션 오버레이 */}
-          <div className="absolute inset-0 bg-neutral-900/0 group-hover:bg-neutral-900/80 transition-all duration-700 flex items-center justify-center opacity-0 group-hover:opacity-100">
-            <div className="text-center text-white p-4 transform translate-y-4 group-hover:translate-y-0 transition-all duration-700">
-              <p className="text-[8px] md:text-[10px] tracking-[0.4em] uppercase mb-1 md:mb-2 font-light text-neutral-400">{art.year}</p>
-              <h4 className="text-xs md:text-sm font-serif tracking-tight">{art.title}</h4>
+      <div className="relative h-full bg-white overflow-hidden flex items-center justify-center pointer-events-none">
+        {/* 💡 md:group-hover를 써서 모바일에서는 커지지 않게 수정했습니다 */}
+        <div className="relative h-full w-auto flex items-center justify-center transition-transform duration-500 md:group-hover:scale-105">
+          <img
+            src={imageSrc}
+            alt={art.title}
+            className="h-full w-auto object-contain select-none pointer-events-none"
+            onError={(e) => { e.target.src = getPlaceholderSrc(); }}
+          />
+          {/* 오버레이도 PC에서만 보이거나 클릭 시에만 잠깐 보이도록 md: 사용 */}
+          <div className="absolute inset-0 bg-neutral-900/0 md:group-hover:bg-neutral-900/80 transition-all duration-500 flex items-center justify-center opacity-0 md:group-hover:opacity-100">
+            <div className="text-center text-white p-4">
+              <p className="text-[8px] md:text-[10px] tracking-[0.4em] mb-1 font-light text-neutral-400 uppercase">{art.year}</p>
+              <h4 className="text-xs md:text-sm font-serif">{art.title}</h4>
             </div>
           </div>
         </div>
@@ -384,9 +380,6 @@ const ArtworkCard = ({ art, onClick, isScrolling }) => {
     </div>
   );
 };
-
-
-
 
 const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -405,9 +398,10 @@ const App = () => {
   const sliderRef = useRef(null);
   const [isDown, setIsDown] = useState(false);
   const [startX, setStartX] = useState(0);
-  const [startY, setStartY] = useState(0); // Y축 이동 감지용 추가
   const [scrollLeft, setScrollLeft] = useState(0);
-  const [isMoving, setIsMoving] = useState(false); // 실제 드래그 중인지 체크용 추가
+  const [isMoving, setIsMoving] = useState(false);
+  const [pressStartTime, setPressStartTime] = useState(0);
+  const requestRef = useRef(); // 💡 자동 흐름 애니메이션용
 
   const newsSliderRef = useRef(null);
   const [isNewsDown, setIsNewsDown] = useState(false);
@@ -467,9 +461,33 @@ const App = () => {
   const filteredArtList = useMemo(() =>
     activeCategory === 'All' ? ARTWORKS : ARTWORKS.filter(art => art.category === activeCategory)
     , [activeCategory]);
-
   const loopList = useMemo(() => [...filteredArtList, ...filteredArtList, ...filteredArtList], [filteredArtList]);
-  const [pressStartTime, setPressStartTime] = useState(0); // 클릭 시간 측정용
+  const animate = () => {
+    if (!isDown && !selectedArt && sliderRef.current) {
+      sliderRef.current.scrollLeft += 1; // 흐르는 속도 조절 (1: 보통, 2: 빠름)
+
+      // 끝까지 가면 중앙으로 순간이동 (무한 루프)
+      const maxScroll = sliderRef.current.scrollWidth / 3;
+      if (sliderRef.current.scrollLeft >= maxScroll * 2) {
+        sliderRef.current.scrollLeft = maxScroll;
+      }
+    }
+    requestRef.current = requestAnimationFrame(animate);
+  };
+
+  useEffect(() => {
+    requestRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(requestRef.current);
+  }, [isDown, selectedArt]);
+
+  const handleStart = (e) => {
+    setIsDown(true);
+    setIsMoving(false);
+    setPressStartTime(Date.now());
+    const pageX = e.pageX || e.touches?.[0].pageX;
+    setStartX(pageX - sliderRef.current.offsetLeft);
+    setScrollLeft(sliderRef.current.scrollLeft);
+  };
 
   const handleMouseDown = (e) => {
     setIsDown(true);
@@ -561,6 +579,24 @@ const App = () => {
     }, 300);
   };
 
+  const handleMove = (e) => {
+    if (!isDown) return;
+    const pageX = e.pageX || e.touches?.[0].pageX;
+    const x = pageX - sliderRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5; // 드래그 감도
+
+    if (Math.abs(walk) > 10) {
+      setIsMoving(true);
+      if (e.cancelable) e.preventDefault();
+      sliderRef.current.scrollLeft = scrollLeft - walk;
+    }
+  };
+
+  const handleEnd = () => {
+    if (Date.now() - pressStartTime < 200) setIsMoving(false);
+    setIsDown(false);
+  };
+
 
   return (
     <div className="min-h-screen bg-white text-neutral-900 font-sans selection:bg-neutral-100">
@@ -573,14 +609,11 @@ const App = () => {
         .animate-modal {
           animation: modalEntry 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
-        .animate-marquee { display: flex; width: fit-content; animation: marquee 20s linear infinite; }
-        .animate-marquee:hover { animation-play-state: paused; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar {
           -ms-overflow-style: none;
           scrollbar-width: none;
           touch-action: pan-y; /* 수직 스크롤은 브라우저에 맡기고 수평 터치 간섭 방지 */
-          -webkit-overflow-scrolling: touch;
         }
         html { scroll-behavior: smooth; }
         .custom-scrollbar::-webkit-scrollbar { height: 3px; width: 3px; }
@@ -736,22 +769,20 @@ const App = () => {
         </div>
         <div
           ref={sliderRef}
-          className="overflow-x-auto no-scrollbar h-[520px] md:h-[680px] relative select-none touch-pan-y"
-          onPointerDown={handleMouseDown} // MouseDown 대신 PointerDown 권장
-          onPointerMove={handleMouseMove}
-          onPointerUp={handleMouseUp}
-          onPointerLeave={handleMouseUp}
+          className="overflow-x-auto no-scrollbar h-[520px] md:h-[680px] relative select-none cursor-grab active:cursor-grabbing"
+          onPointerDown={handleStart}
+          onPointerMove={handleMove}
+          onPointerUp={handleEnd}
+          onPointerLeave={handleEnd}
         >
-          <div
-            className={`
-      flex flex-col flex-wrap content-start h-full gap-2 md:gap-4 px-4 
-      ${(!isDown && !selectedArt) ? 'animate-marquee' : ''} 
-      w-max
-    `}
-            style={{ minWidth: '100%', pointerEvents: 'auto' }}
-          >
+          <div className="flex flex-col flex-wrap content-start h-full gap-4 px-4 w-max">
             {loopList.map((art, idx) => (
-              <ArtworkCard key={`${art.id}-${idx}`} art={art} isScrolling={isMoving} onClick={(a) => { setSelectedArt(a); setPreviewMode('info'); }} />
+              <ArtworkCard
+                key={`${art.id}-${idx}`}
+                art={art}
+                isScrolling={isMoving}
+                onClick={(a) => setSelectedArt(a)}
+              />
             ))}
           </div>
         </div>
