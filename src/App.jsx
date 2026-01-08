@@ -292,7 +292,7 @@ const ARTIST_INFO = {
   bio: "21회의 개인전과 수많은 단체전을 통해 자신만의 독창적인 예술 세계를 구축해왔습니다. '틈', '달팽이의 꿈' 등 서정적이고 추상적인 주제를 통해 현대인에게 위로와 성찰의 시간을 선사합니다.",
   email: "seyart@naver.com",
   naverProfile: "https://search.naver.com/search.naver?where=nexearch&sm=tab_etc&mra=bjky&pkid=1&os=33617600&qvt=0&query=%EC%9E%91%EA%B0%80%20%EC%8B%A0%EC%9D%80%EC%98%81",
-  address: "경기도 남양주시 화도읍 북한강로 1512 (아르템갤러리)",
+  address: "경기도 남양주시",
   social: {
     instagram: "https://instagram.com/eunyoung2164",
     id: "@eunyoung2164"
@@ -547,7 +547,7 @@ const App = () => {
     setTimeout(() => setIsMoving(false), 50);
   };
 
-const handleNewsPointerDown = (e) => {
+  const handleNewsPointerDown = (e) => {
     setIsNewsDown(true);
     setIsNewsMoving(false); // 💡 시작할 때는 움직임 없음으로 초기화
     setNewsStartX(e.pageX - newsSliderRef.current.offsetLeft);
@@ -577,7 +577,7 @@ const handleNewsPointerDown = (e) => {
 
   const handleNewsScroll = () => {
     if (!newsSliderRef.current) return;
-    
+
     const container = newsSliderRef.current;
     const singleSetWidth = container.scrollWidth / 3; // 전체 길이의 1/3 지점
 
@@ -825,8 +825,8 @@ const handleNewsPointerDown = (e) => {
             <div className="flex items-center gap-2 pt-2">
               <Plus size={14} className="text-neutral-300" />
               <p className="text-[11px] md:text-xs text-neutral-400 tracking-wider font-medium break-keep">
-  작품을 클릭하시면 상세 정보와 가상 배치를 확인하실 수 있습니다.
-</p>
+                작품을 클릭하시면 상세 정보와 가상 배치를 확인하실 수 있습니다.
+              </p>
             </div>
           </div>
         </div>
@@ -917,43 +917,43 @@ const handleNewsPointerDown = (e) => {
                 <button onClick={() => scrollNews('right')} className="w-10 h-10 md:w-14 md:h-14 rounded-full border border-white/10 flex items-center justify-center hover:bg-white hover:text-neutral-900 transition-all"><ChevronRight size={18} /></button>
               </div>
             </div>
-            <div 
-  ref={newsSliderRef} 
-  onPointerDown={handleNewsPointerDown}
-  onPointerMove={handleNewsPointerMove}
-  onPointerUp={handleNewsPointerUp}
-  onPointerCancel={handleNewsPointerUp} 
-  onScroll={handleNewsScroll}
-  className="flex overflow-x-auto pb-8 gap-5 md:gap-8 snap-x no-scrollbar cursor-grab active:cursor-grabbing select-none"
-  style={{ touchAction: 'pan-y' }}
->
+            <div
+              ref={newsSliderRef}
+              onPointerDown={handleNewsPointerDown}
+              onPointerMove={handleNewsPointerMove}
+              onPointerUp={handleNewsPointerUp}
+              onPointerCancel={handleNewsPointerUp}
+              onScroll={handleNewsScroll}
+              className="flex overflow-x-auto pb-8 gap-5 md:gap-8 snap-x no-scrollbar cursor-grab active:cursor-grabbing select-none"
+              style={{ touchAction: 'pan-y' }}
+            >
               {loopNewsList.map((article, i) => (
-    <a
-    key={i} 
-    href={article.url}
-    target="_blank"
-    rel="noopener noreferrer"
-    draggable="false"
-    onDragStart={(e) => e.preventDefault()}
-    onClick={(e) => {
-      if (isNewsMoving) {
-        e.preventDefault();
-      }
-    }}
-    /* 1. transform-gpu 클래스 추가 (GPU 가속 강제) */
-    className="min-w-[260px] sm:min-w-[300px] md:min-w-[380px] group/news block transform-gpu"
-    /* 2. 렌더링 아티팩트 방지를 위한 스타일 추가 */
-    style={{ 
-      backfaceVisibility: 'hidden', 
-      WebkitBackfaceVisibility: 'hidden',
-      outline: '1px solid transparent' // 미세한 픽셀 오차 보정용 trick
-    }}
-  >
-    <Newspaper className="text-neutral-500 mb-8 group-hover:text-neutral-300 transition-colors" size={28} strokeWidth={1} />
-    <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest mb-4">{article.source}</p>
-    <h5 className="text-lg font-serif leading-relaxed text-neutral-300 group-hover:text-white transition-all h-14 overflow-hidden">{article.title}</h5>
-  </a>
-))}
+                <a
+                  key={i}
+                  href={article.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  draggable="false"
+                  onDragStart={(e) => e.preventDefault()}
+                  onClick={(e) => {
+                    if (isNewsMoving) {
+                      e.preventDefault();
+                    }
+                  }}
+                  /* 1. transform-gpu 클래스 추가 (GPU 가속 강제) */
+                  className="min-w-[260px] sm:min-w-[300px] md:min-w-[380px] group/news block transform-gpu"
+                  /* 2. 렌더링 아티팩트 방지를 위한 스타일 추가 */
+                  style={{
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
+                    outline: '1px solid transparent' // 미세한 픽셀 오차 보정용 trick
+                  }}
+                >
+                  <Newspaper className="text-neutral-500 mb-8 group-hover:text-neutral-300 transition-colors" size={28} strokeWidth={1} />
+                  <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest mb-4">{article.source}</p>
+                  <h5 className="text-lg font-serif leading-relaxed text-neutral-300 group-hover:text-white transition-all h-14 overflow-hidden">{article.title}</h5>
+                </a>
+              ))}
             </div>
           </div>
         </div>
@@ -1004,7 +1004,7 @@ const handleNewsPointerDown = (e) => {
           <a href="#gallery" className="hover:text-neutral-900 transition-colors">Gallery</a>
           <a href="#contact" className="hover:text-neutral-900 transition-colors">Contact</a>
         </div>
-        <p className="text-[9px] text-neutral-300 uppercase tracking-[0.4em]">© 2024 Artist Shin Eun Young. Portfolio.</p>
+        <p className="text-[9px] text-neutral-300 uppercase tracking-[0.4em]">© 2026 Artist Shin Eun Young. Portfolio.</p>
       </footer>
 
       {selectedArt && (
@@ -1058,9 +1058,9 @@ const handleNewsPointerDown = (e) => {
                 /* --- 가상 배치(Simulation) 뷰 시작 --- */
                 <div
                   className="flex flex-col items-center gap-4 md:gap-8 py-2 md:py-6 min-h-full text-center px-2 md:px-4 select-none"
-                  onPointerMove={handleSimMouseMove} 
-  onPointerUp={handleSimMouseUp}
-  onPointerLeave={handleSimMouseUp}
+                  onPointerMove={handleSimMouseMove}
+                  onPointerUp={handleSimMouseUp}
+                  onPointerLeave={handleSimMouseUp}
                 >
                   {/* 1. 상단 방 선택 버튼 (모바일에서 더 작고 촘촘하게) */}
                   <div className="flex flex-wrap justify-center gap-1.5 md:gap-4 mt-2">
